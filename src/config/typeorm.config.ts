@@ -1,19 +1,27 @@
-import { TypeOrmModuleOptions } from '@nestjs/typeorm';
+import { DataSource, DataSourceOptions } from 'typeorm';
 import { ConfigService } from '@nestjs/config';
-import { Issue } from '../domain/issue/entities/issue.entity';
-import { Revision } from '../domain/issue/entities/revision.entity';
+import { config } from 'dotenv';
+
+config();
 
 const configService = new ConfigService();
 
-export const typeOrmConfig: TypeOrmModuleOptions = {
+const options = {
   type: 'postgres',
-  host: configService.get<string>('DATABASE_HOST', 'db'),
-  port: parseInt(configService.get<string>('DATABASE_PORT', '5432'), 10),
-  username: configService.get<string>('DATABASE_USER', 'root'),
-  password: configService.get<string>('DATABASE_PASSWORD', 'your_password'),
-  database: configService.get<string>('DATABASE_NAME', 'testlio'),
-  entities: [Issue, Revision],
-  migrations: ['dist/database/migrations/*.{js,ts}'],
-  migrationsRun: false,
+  host: configService.get<string>('DATABASE_HOST'),
+  port: parseInt(configService.get<string>('DATABASE_PORT'), 5432),
+  username: configService.get<string>('DATABASE_USER'),
+  password: configService.get<string>('DATABASE_PASSWORD'),
+  database: configService.get<string>('DATABASE_NAME'),
   synchronize: false,
+  entities: [__dirname + '/../domain/**/entities/*.entity.{js,ts}'],
+  migrations: [__dirname + '/../database/migrations/*.{js,ts}'],
+  migrationsRun: false,
+  logging: true,
 };
+
+const AppDataSource = new DataSource(
+  options as DataSourceOptions,
+);
+AppDataSource.initialize();
+export default AppDataSource;
