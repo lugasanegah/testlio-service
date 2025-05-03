@@ -11,6 +11,11 @@ export class JwtAuthMiddleware implements NestMiddleware {
   ) {}
 
   use(req: Request, res: Response, next: NextFunction) {
+    const publicRoutes = ['/health', '/discovery'];
+    if (publicRoutes.some((route) => req.originalUrl.startsWith(route))) {
+      return next();
+    }
+
     // Validate X-Client-ID
     const clientId = req.headers['x-client-id'] as string;
     if (!clientId) {
