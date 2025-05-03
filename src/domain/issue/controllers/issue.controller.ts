@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Get, Patch, Param, Query, Request } from '@nestjs/common';
+import { Controller, Post, Body, Get, Patch, Param, Query, Request, UsePipes, ValidationPipe} from '@nestjs/common';
 import { IssueService } from '../services/issue.service';
 import { CreateIssueDto } from '../dtos/create-issue.dto';
 import { UpdateIssueDto } from '../dtos/update-issue.dto';
@@ -31,6 +31,7 @@ export class IssueController {
   }
 
   @Get(':id/compare')
+  @UsePipes(new ValidationPipe({ transform: true }))
   compareRevisions(@Param('id') id: number, @Query() compareRevisionsDto: CompareRevisionsDto): Promise<any> {
     return this.issueService.compareRevisions(id, compareRevisionsDto);
   }
