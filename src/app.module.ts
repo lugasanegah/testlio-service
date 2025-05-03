@@ -1,7 +1,9 @@
-import { Module } from '@nestjs/common';
+import { Module, NestModule, MiddlewareConsumer } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule } from '@nestjs/config';
 import { IssueModule } from './domain/issue/issue.module';
+import { AuthModule } from './domain/auth/auth.module';
+import { JwtAuthMiddleware } from './domain/auth/infrastucture/middleware/jwt-auth.middleware';
 
 
 @Module({
@@ -21,6 +23,13 @@ import { IssueModule } from './domain/issue/issue.module';
       autoLoadEntities: true,
     }),
     IssueModule,
+    AuthModule
   ],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer
+      .apply(JwtAuthMiddleware)
+      .forRoutes('issues');
+  }
+}

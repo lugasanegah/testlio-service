@@ -97,11 +97,15 @@ export class IssueService {
       order: { updatedAt: 'ASC' },
     });
 
+    if (!revisions.length) {
+      throw new NotFoundException('No revisions found for this issue');
+    }
+
     const revA = revisions.find((r) => r.id === dto.revisionA);
     const revB = revisions.find((r) => r.id === dto.revisionB);
 
     if (!revA || !revB) {
-      throw new NotFoundException('Revision not found');
+      throw new NotFoundException(`Revision not found: revisionA=${dto.revisionA}, revisionB=${dto.revisionB}`);
     }
 
     const changes: { [key: string]: { before: string; after: string } } = {};
@@ -116,15 +120,22 @@ export class IssueService {
 
     const revAIndex = revisions.findIndex((r) => r.id === dto.revisionA);
     const revBIndex = revisions.findIndex((r) => r.id === dto.revisionB);
-    const revisionTrail = revisions.slice(
-      Math.min(revAIndex, revBIndex),
-      Math.max(revAIndex, revBIndex) + 1,
-    );
 
+    // Determine the order (older-to-newer or newer-to-older)
+    const startIndex = Math.min(revAIndex, revBIndex);
+    const endIndex = Math.max(revAIndex, revBIndex);
+    const revisionTrail = revisions.slice(startIndex, endIndex + 1);
+
+    // If revB is older than revA, swap before/after to reflect newer-to-older comparison
+    const isNewerToOlder = revBIndex < revAIndex;
     return {
-      before: revA.issue,
-      after: revB.issue,
-      changes,
+      before: isNewerToOlder ? revB.issue : revA.issue,
+      after: isNewerToOlder ? revA.issue : revB.issue,
+      changes: isNewerToOlder
+        ? Object.fromEntries(
+          Object.entries(changes).map(([key, value]) => [key, { before: value.after, after: value.before }]),
+        )
+        : changes,
       revisions: revisionTrail,
     };
   }
